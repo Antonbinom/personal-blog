@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const morgan = require('morgan')
+
 const app = express();
 
 app.set('view engine', 'ejs');
@@ -14,6 +15,8 @@ app.listen(PORT, (error) => {
 });
 
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms'));
+
+app.use(express.urlencoded({ extends: false }));
 
 app.use(express.static('style'));
 
@@ -34,18 +37,53 @@ app.get('/contacts', (req, res) => {
 
 app.get('/posts/:id', (req, res) => {
   const title = 'Post';
-  res.render(createPath('post'), { title });
+  const post = {
+    id: 1,
+    title: 'Post title',
+    text: ' Lorem ipsum dolor sit amet consectetur adipisicing elit. Sapiente quidem provident, dolores, vero laboriosam nemo mollitia impedit unde fugit sint eveniet, minima odio ipsum sed recusandae aut iste aspernatur dolorem.',
+    date: '21.01.2023',
+    author: 'Anton'
+  }
+  res.render(createPath('post'), { title, post });
 });
 
 app.get('/posts', (req, res) => {
   const title = 'Posts';
-  res.render(createPath('posts'), { title });
+  const posts = [
+    {
+      id: 1,
+      title: 'Post title1',
+      text: ' Lorem ipsum dolor sit amet consectetur adipisicing elit. Sapiente quidem provident, dolores, vero laboriosam nemo mollitia impedit unde fugit sint eveniet, minima odio ipsum sed recusandae aut iste aspernatur dolorem.',
+      date: '21.01.2023',
+      author: 'Anton'
+    },
+    {
+      id: 2,
+      title: 'Post title2',
+      text: ' Lorem ipsum dolor sit amet consectetur adipisicing elit. Sapiente quidem provident, dolores, vero laboriosam nemo mollitia impedit unde fugit sint eveniet, minima odio ipsum sed recusandae aut iste aspernatur dolorem.',
+      date: '21.01.2023',
+      author: 'Anton'
+    },
+  ]
+  res.render(createPath('posts'), { title, posts });
 });
 
 app.get('/add-post', (req, res) => {
   const title = 'Add Post';
   res.render(createPath('add-post'), { title });
 });
+
+app.post('/add-post', (req, res) => {
+  const { title, author, text } = req.body
+  const post = {
+    id: new Date,
+    title,
+    text,
+    author,
+    date: new Date().toDateString(),
+  }
+  res.render(createPath('post'), { post, title })
+})
 
 app.use((req, res) => {
   const title = 'Error Page';
