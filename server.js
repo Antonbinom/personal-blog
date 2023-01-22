@@ -1,13 +1,25 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const path = require('path');
-const morgan = require('morgan')
-
+const morgan = require('morgan');
+const Post = require('./models/post');
 const app = express();
-
 app.set('view engine', 'ejs');
 
 const PORT = 3000;
+// параметры для подключения к базе
+const db = 'mongodb+srv://Antonbinom:Rg1570S5470@test.xu3803a.mongodb.net/node-blog?retryWrites=true&w=majority'
 
+// фикс варнинга
+mongoose.set('strictQuery', false)
+
+// подключение базы через mongoose
+mongoose
+  .connect(db, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(res => console.log('Connect to DB'))
+  .catch(error => console.log(error))
+
+// путь к файлу с версткой
 const createPath = (page) => path.resolve(__dirname, 'ejs-views', `${page}.ejs`);
 
 app.listen(PORT, (error) => {
@@ -16,7 +28,7 @@ app.listen(PORT, (error) => {
 
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms'));
 
-app.use(express.urlencoded({ extends: false }));
+app.use(express.urlencoded({ extended: false }));
 
 app.use(express.static('style'));
 
@@ -28,9 +40,7 @@ app.get('/', (req, res) => {
 app.get('/contacts', (req, res) => {
   const title = 'Contacts';
   const contacts = [
-    { name: 'YouTube', link: 'http://youtube.com/YauhenKavalchuk' },
-    { name: 'Twitter', link: 'http://github.com/YauhenKavalchuk' },
-    { name: 'GitHub', link: 'http://twitter.com/YauhenKavalchuk' },
+    { name: 'GitHub', link: 'https://github.com/Antonbinom' },
   ];
   res.render(createPath('contacts'), { contacts, title });
 });
@@ -75,14 +85,16 @@ app.get('/add-post', (req, res) => {
 
 app.post('/add-post', (req, res) => {
   const { title, author, text } = req.body
-  const post = {
-    id: new Date,
-    title,
-    text,
-    author,
-    date: new Date().toDateString(),
-  }
-  res.render(createPath('post'), { post, title })
+  // создаем пременную post с моделью, внутри которой передадим данные из запроса
+  const post = new Post({ title, author, text })
+  // применим к модели метод save
+  post
+    .save()
+    .then(result => res.send(result))
+    .catch(error => {
+      console.log(error);
+      res.render(createPath('error'), { title: 'Error' })
+    })
 })
 
 app.use((req, res) => {
