@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const path = require('path');
 const morgan = require('morgan');
+const methodOverride = require('method-override');
 const Post = require('./models/post');
 const Contact = require('./models/contact');
 
@@ -34,11 +35,16 @@ app.use(express.urlencoded({ extended: false }));
 
 app.use(express.static('style'));
 
+// будет реагировать на строку _method и вызывать кастомный метод PUT
+app.use(methodOverride('_method'))
+
+// Главная страница
 app.get('/', (req, res) => {
   const title = 'Home';
   res.render(createPath('index'), { title });
 });
 
+// Получение данных страницы с контактами
 app.get('/contacts', (req, res) => {
   const title = 'Contacts';
   // получаем данные из коллекции с контактами
@@ -51,19 +57,7 @@ app.get('/contacts', (req, res) => {
     });
 });
 
-app.get('/posts/:id', (req, res) => {
-  const title = 'Post';
-  Post
-    .findById(req.params.id)
-    .then(post => {
-      res.render(createPath('post'), { post, title })
-    })
-    .catch(error => {
-      console.log(error);
-      res.render(createPath('error'), { title: 'Error' })
-    })
-});
-
+// Получаем все посты на странице с постами
 app.get('/posts', (req, res) => {
   const title = 'Posts';
   Post
@@ -79,11 +73,28 @@ app.get('/posts', (req, res) => {
     });
 });
 
+// Страница с конкретным постом
+app.get('/posts/:id', (req, res) => {
+  const title = 'Post';
+  // Находим пост по id
+  Post
+    .findById(req.params.id)
+    .then(post => {
+      res.render(createPath('post'), { post, title })
+    })
+    .catch(error => {
+      console.log(error);
+      res.render(createPath('error'), { title: 'Error' })
+    })
+});
+
+// Страница с созданием поста
 app.get('/add-post', (req, res) => {
   const title = 'Add Post';
   res.render(createPath('add-post'), { title });
 });
 
+// Добавление нового поста в базу
 app.post('/add-post', (req, res) => {
   const { title, author, text } = req.body
   // создаем пременную post с моделью, внутри которой передадим данные из запроса
@@ -99,6 +110,49 @@ app.post('/add-post', (req, res) => {
     })
 })
 
+// Удаляем отдельный пост
+app.delete('/posts/:id', (req, res) => {
+  const title = 'Post';
+  Post
+    .findByIdAndDelete(req.params.id)
+    .then(result => {
+      res.sendStatus(200);
+    })
+    .catch(error => {
+      console.log(error);
+      res.render(createPath('error'), { title: 'Error' })
+    })
+})
+
+// Переходим на страницу редактирования поста
+app.get('/edit/:id', (req, res) => {
+  const title = 'Edit Post';
+  Post
+    .findById(req.params.id)
+    .then(post => {
+      res.render(createPath('edit-post'), { post, title })
+    })
+    .catch(error => {
+      console.log(error);
+      res.render(createPath('error'), { title: 'Error' })
+    })
+})
+
+// Редактирование поста методом put
+app.put('/edit/:id', (req, res) => {
+  const { title, author, text } = req.body;
+  const { id } = req.params;
+
+  Post
+    .findByIdAndUpdate(id, { title, author, text })
+    .then(result => res.redirect(`/posts/${id}`))
+    .catch(error => {
+      console.log(error);
+      res.render(createPath('error'), { title: 'Error' })
+    })
+})
+
+// Страница 404
 app.use((req, res) => {
   const title = 'Error Page';
   res
