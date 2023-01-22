@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const path = require('path');
 const morgan = require('morgan');
 const Post = require('./models/post');
+const Contact = require('./models/contact');
+
 const app = express();
 app.set('view engine', 'ejs');
 
@@ -39,43 +41,42 @@ app.get('/', (req, res) => {
 
 app.get('/contacts', (req, res) => {
   const title = 'Contacts';
-  const contacts = [
-    { name: 'GitHub', link: 'https://github.com/Antonbinom' },
-  ];
-  res.render(createPath('contacts'), { contacts, title });
+  // получаем данные из коллекции с контактами
+  Contact
+    .find()
+    .then(contacts => res.render(createPath('contacts'), { contacts, title }))
+    .catch(error => {
+      console.log(error);
+      res.render(createPath('error'), { title: 'Error' })
+    });
 });
 
 app.get('/posts/:id', (req, res) => {
   const title = 'Post';
-  const post = {
-    id: 1,
-    title: 'Post title',
-    text: ' Lorem ipsum dolor sit amet consectetur adipisicing elit. Sapiente quidem provident, dolores, vero laboriosam nemo mollitia impedit unde fugit sint eveniet, minima odio ipsum sed recusandae aut iste aspernatur dolorem.',
-    date: '21.01.2023',
-    author: 'Anton'
-  }
-  res.render(createPath('post'), { title, post });
+  Post
+    .findById(req.params.id)
+    .then(post => {
+      res.render(createPath('post'), { post, title })
+    })
+    .catch(error => {
+      console.log(error);
+      res.render(createPath('error'), { title: 'Error' })
+    })
 });
 
 app.get('/posts', (req, res) => {
   const title = 'Posts';
-  const posts = [
-    {
-      id: 1,
-      title: 'Post title1',
-      text: ' Lorem ipsum dolor sit amet consectetur adipisicing elit. Sapiente quidem provident, dolores, vero laboriosam nemo mollitia impedit unde fugit sint eveniet, minima odio ipsum sed recusandae aut iste aspernatur dolorem.',
-      date: '21.01.2023',
-      author: 'Anton'
-    },
-    {
-      id: 2,
-      title: 'Post title2',
-      text: ' Lorem ipsum dolor sit amet consectetur adipisicing elit. Sapiente quidem provident, dolores, vero laboriosam nemo mollitia impedit unde fugit sint eveniet, minima odio ipsum sed recusandae aut iste aspernatur dolorem.',
-      date: '21.01.2023',
-      author: 'Anton'
-    },
-  ]
-  res.render(createPath('posts'), { title, posts });
+  Post
+    .find()
+    // сортируем по убыванию(-1)
+    .sort({ createdAt: -1 })
+    .then(posts => {
+      res.render(createPath('posts'), { posts, title })
+    })
+    .catch(error => {
+      console.log(error);
+      res.render(createPath('error'), { title: 'Error' });
+    });
 });
 
 app.get('/add-post', (req, res) => {
@@ -90,7 +91,8 @@ app.post('/add-post', (req, res) => {
   // применим к модели метод save
   post
     .save()
-    .then(result => res.send(result))
+    // редирект на страницу с постами создания нового поста
+    .then(result => res.redirect('/posts'))
     .catch(error => {
       console.log(error);
       res.render(createPath('error'), { title: 'Error' })
