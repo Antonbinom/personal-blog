@@ -5,7 +5,7 @@ const methodOverride = require('method-override');
 
 const postRouters = require('./routes/post-routes')
 const contactRouters = require('./routes/contact-routes')
-
+const postApiRoutes = require('./routes/api-post-routes')
 const createPath = require('./helpers/create-path')
 
 const app = express();
@@ -47,6 +47,7 @@ app.get('/', (req, res) => {
 // подключаем роуты к приложению
 app.use(postRouters)
 app.use(contactRouters)
+app.use(postApiRoutes)
 
 // Страница 404
 app.use((req, res) => {
