@@ -14,7 +14,7 @@ app.set('view engine', 'ejs');
 
 const PORT = 3000;
 // параметры для подключения к базе
-const db = 'mongodb+srv://Antonbinom:Rg1570S5470@test.xu3803a.mongodb.net/node-blog?retryWrites=true&w=majority'
+const db = 'mongodb+srv://Antonbinom:1234567890@test.xu3803a.mongodb.net/node-blog?retryWrites=true&w=majority'
 
 // фикс варнинга
 mongoose.set('strictQuery', false)
